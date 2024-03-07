@@ -36,7 +36,7 @@ docker run --gpus all nvidia/cuda:11.5.2-base-ubuntu20.04 nvidia-smi
 1. Clone the Docker Compose repository:
 
     ```bash
-    git clone https://github.com/valiantlynx/ollama-docker.git
+    git clone https://github.com/waqaskhan137/ollama-docker.git
     ```
 
 2. Change to the project directory:
