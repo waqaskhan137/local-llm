@@ -12,10 +12,8 @@ services:
     restart: always
     depends_on:
       - ollama
-      - llama-webui
-    networks:
-      - ollama-docker
-      
+      - ollama-webui
+
   ollama:
     volumes:
       - ./ollama/ollama:/root/.ollama
@@ -35,7 +33,7 @@ services:
               capabilities: [gpu]
 
   ollama-webui:
-    image: ghcr.io/ollama-webui/ollama-webui:main
+    image: ghcr.io/open-webui/open-webui:git-df298e1
     container_name: ollama-webui
     volumes:
       - ./ollama/ollama-webui:/app/backend/data

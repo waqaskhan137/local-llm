@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@3.7.3/dist/full.css" rel="stylesheet" type="text/css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org"></script>
+    <script src="https://unpkg.com/htmx.org/dist/ext/client-side-templates.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/nunjucks@3.2.4/browser/nunjucks.min.js"></script>
+    <title>Auto Ollama Docker Compose Setup</title>
+</head>
+
+<body class="bg-black-to-r from-blue-600 via-black-600 to-pink-600 font-sans h-screen">
+
+    <header class="bg-opacity-90 backdrop-filter backdrop-blur-lg py-6">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-3xl md:text-4xl lg:text-5xl font-extrabold text-white">Auto Ollama Docker Compose Setup</h1>
+            <nav>
+                <ul class="flex space-x-4">
+                    <li><a href="/" class="hover:text-gray-300 text-white">Home</a></li>
+                    <li><a href="#features" class="hover:text-gray-300 text-white">Features</a></li>
+                    <li><a href="/docs" class="hover:text-gray-300 text-white">Docs</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section id="hero" class="bg-gray-900 text-white py-16">
+        <div class="container mx-auto text-center">
+            <h2 class="text-4xl lg:text-5xl font-semibold mb-4">Simplify Your Development with Ollama Docker</h2>
+            <p class="text-lg lg:text-xl text-gray-300 leading-7 mb-8">Streamline your Ollama deployments using Docker
+                Compose. Dive into a containerized environment designed for simplicity and efficiency.</p>
+            <div class="space-x-4">
+                <a href="http://localhost:3000"
+                    class="bg-blue-500 text-white px-8 py-3 rounded-full hover:bg-blue-700 transition duration-300">Ollama
+                    Web
+                    UI</a>
+                <a href="http://localhost:11434"
+                    class="bg-green-500 text-white px-8 py-3 rounded-full hover:bg-green-700 transition duration-300">Ollama
+                    Status</a>
+                <a href="/local-rag-test"
+                    class="bg-red-500 text-white px-8 py-3 rounded-full hover:bg-red-700 transition duration-300">Local
+                    RAG
+                    Test</a>
+            </div>
+        </div>
+    </section>
+
+
+    <section id="features" class="bg-gray-100 py-16">
+        <div class="container mx-auto">
+            <div class="max-w-lg mx-auto p-8 bg-white rounded-lg shadow-md">
+                <h3 class="text-2xl font-semibold mb-4">Test Your Local RAG</h3>
+                <form onsubmit="summarizeWebpage(); return false;" class="mb-6" id="summarizeForm">
+                    <input type="text" id="url" name="url" placeholder="Enter URL"
+                        class="border border-gray-300 px-4 py-2 rounded-md w-full mb-2 focus:outline-none focus:border-blue-500">
+                    <select id="summarizeModel"
+                        class="border border-gray-300 px-4 py-2 rounded-md w-full mb-2 focus:outline-none focus:border-blue-500">
+                        <!-- Dropdown options will be dynamically populated here -->
+                    </select>
+                    <button type="submit"
+                        class="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition duration-300"
+                        id="summarizeButton">Summarize Webpage</button>
+                </form>
+                <form onsubmit="generateFacts(); return false;" id="generateForm">
+                    <input type="text" id="topic" name="topic" placeholder="Enter Topic"
+                        class="border border-gray-300 px-4 py-2 rounded-md w-full mb-2 focus:outline-none focus:border-blue-500">
+                    <select id="factsModel"
+                        class="border border-gray-300 px-4 py-2 rounded-md w-full mb-2 focus:outline-none focus:border-blue-500">
+                        <!-- Dropdown options will be dynamically populated here -->
+                    </select>
+                    <button type="submit"
+                        class="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition duration-300"
+                        id="generateButton">Generate Facts</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+
+
+
+    <div id="loadingIndicator" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center hidden">
+        <div class="animate-spin rounded-full h-20 w-20 border-t-2 border-b-2 border-gray-100"></div>
+    </div>
+
+    <div id="popup" class="fixed inset-0 flex items-center justify-center hidden bg-gray-900 bg-opacity-50">
+        <div class="bg-white rounded-lg shadow-md p-6 max-w-md relative">
+            <button onclick="hidePopup()"
+                class="absolute top-2 right-2 text-gray-500 hover:text-gray-700 focus:outline-none">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
+                </svg>
+            </button>
+            <h3 class="text-lg font-semibold mb-2" id="popupTitle"></h3>
+            <p id="popupContent" class="max-h-60vh overflow-y-auto"></p>
+        </div>
+    </div>
+
+
+
+
+
+
+    </div>
+    </div>
+    </section>
+
+    <footer class="bg-gray-900 text-white py-6 bottom-0">
+        <div class="container mx-auto text-center">
+            <p>&copy; 2024 Ollama Docker. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
+    <script src="https://unpkg.com/tippy.js@6"></script>
+    <script>
+
+        // Function to fetch model names from the API and populate the dropdown
+        async function populateModelDropdown() {
+            const dropdowns = document.querySelectorAll('select');
+
+            try {
+                const response = await fetch('http://localhost:11434/api/tags');
+                const data = await response.json();
+
+                // Clear existing options and populate dropdowns with model names
+                if (data.models.length === 0) {
+                    // If no models are available, inform the user to download the models
+                    dropdowns.forEach(dropdown => {
+                        dropdown.innerHTML = '<option value="">No models available. Please download the models.</option>';
+                    });
+                } else {
+                    dropdowns.forEach(dropdown => {
+                        dropdown.innerHTML = '';
+
+                        data.models.forEach(model => {
+                            const option = document.createElement('option');
+                            option.text = model.name;
+                            option.value = model.name;
+                            dropdown.appendChild(option);
+                        });
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching model names:', error);
+            }
+        }
+
+
+        // Call the function to populate the dropdowns when the page loads
+        window.onload = populateModelDropdown;
+
+
+
+        async function summarizeWebpage() {
+            showLoadingIndicator();
+            const url = document.getElementById('url').value;
+            const model_name = document.getElementById('summarizeModel').value;
+            const response = await fetch('http://localhost:8000/summarize_webpage/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ url, model_name }),
+            });
+            const data = await response.json();
+            hideLoadingIndicator();
+            showPopup('Summary', data.summary);
+        }
+
+        async function generateFacts() {
+            showLoadingIndicator();
+            const topic = document.getElementById('topic').value;
+            const model_name = document.getElementById('factsModel').value;
+            const response = await fetch('http://localhost:8000/generate_facts/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ topic, model_name }),
+            });
+            const data = await response.json();
+            hideLoadingIndicator();
+            showPopup('Facts', data.facts);
+        }
+
+        function showLoadingIndicator() {
+            document.getElementById('loadingIndicator').classList.remove('hidden');
+        }
+
+        function hideLoadingIndicator() {
+            document.getElementById('loadingIndicator').classList.add('hidden');
+        }
+
+        function showPopup(title, content) {
+            const popupTitle = document.getElementById('popupTitle');
+            const popupContent = document.getElementById('popupContent');
+            popupTitle.textContent = title;
+            if (typeof content === 'object') {
+                popupContent.textContent = JSON.stringify(content);
+            } else {
+                popupContent.textContent = content;
+            }
+            document.getElementById('popup').classList.remove('hidden');
+        }
+
+
+        function hidePopup() {
+            document.getElementById('popup').classList.add('hidden');
+        }
+
+    </script>
+
+</body>
+
+</html>

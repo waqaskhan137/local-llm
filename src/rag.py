@@ -1,71 +1,50 @@
-# Load web page
-import argparse
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 
-from langchain.document_loaders import WebBaseLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+app = FastAPI()
 
-# Embed and store
-from langchain.vectorstores import Chroma
-from langchain.embeddings import GPT4AllEmbeddings
-from langchain.embeddings import OllamaEmbeddings # We can also try Ollama embeddings
+class URLInput(BaseModel):
+    url: str
 
-from langchain.llms import Ollama
-from langchain.callbacks.manager import CallbackManager
-from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+@app.post("/summarize_webpage/")
+async def summarize_webpage(url_input: URLInput):
+    try:
+        # Execute the code to load webpage, embed content, and summarize
+        from langchain_community.document_loaders import WebBaseLoader
+        from langchain.text_splitter import RecursiveCharacterTextSplitter
+        from langchain_community.vectorstores import Chroma
+        from langchain_community.embeddings import GPT4AllEmbeddings
+        from langchain_community.llms import Ollama
+        from langchain.callbacks.manager import CallbackManager
+        from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+        from langchain import hub
+        from langchain.chains import RetrievalQA
 
-def main():
-    parser = argparse.ArgumentParser(description='Filter out URL argument.')
-    parser.add_argument('--url', type=str, default='https://www.waqasrana.me', required=True, help='The URL to filter out.')
+        # Load webpage
+        loader = WebBaseLoader(url_input.url)
+        data = loader.load()
 
-    args = parser.parse_args()
-    url = args.url
-    print(f"using URL: {url}")
+        # Split into chunks
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1500, chunk_overlap=100)
+        all_splits = text_splitter.split_documents(data)
 
-    loader = WebBaseLoader(url)
-    data = loader.load()
+        # Embed and store
+        vectorstore = Chroma.from_documents(documents=all_splits, embedding=GPT4AllEmbeddings())
 
-    # Split into chunks 
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1500, chunk_overlap=100)
-    all_splits = text_splitter.split_documents(data)
-    print(f"Split into {len(all_splits)} chunks")
+        # RAG prompt
+        QA_CHAIN_PROMPT = hub.pull("rlm/rag-prompt-llama")
 
-    vectorstore = Chroma.from_documents(documents=all_splits,
-                                        embedding=GPT4AllEmbeddings())
+        # LLM
+        llm = Ollama(model="llama2-uncensored", verbose=True, callback_manager=CallbackManager([StreamingStdOutCallbackHandler()]))
 
-    # Retrieve
-    # question = "What are the latest headlines on {url}?"
-    # docs = vectorstore.similarity_search(question)
+        # QA chain
+        qa_chain = RetrievalQA.from_chain_type(llm, retriever=vectorstore.as_retriever(), chain_type_kwargs={"prompt": QA_CHAIN_PROMPT})
 
-    print(f"Loaded {len(data)} documents")
-    # print(f"Retrieved {len(docs)} documents")
+        # Ask a question to summarize
+        question = f"summarize what this blog is trying to say? {url_input.url}"
+        result = qa_chain({"query": question})
 
-    # RAG prompt
-    from langchain import hub
-    QA_CHAIN_PROMPT = hub.pull("rlm/rag-prompt-llama")
+        return {"summary": result}
 
-
-    # LLM
-    llm = Ollama(model="llama2-uncensored",
-                verbose=True,
-                callback_manager=CallbackManager([StreamingStdOutCallbackHandler()]))
-    print(f"Loaded LLM model {llm.model}")
-
-    # QA chain
-    from langchain.chains import RetrievalQA
-    qa_chain = RetrievalQA.from_chain_type(
-        llm,
-        retriever=vectorstore.as_retriever(),
-        chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
-
-    )
-
-    # Ask a question
-    question = f"summarize what this blog is trying to say? {url}?"
-    result = qa_chain({"query": question})
-
-    # print(result)
-    
-
-
-if __name__ == "__main__":
-    main()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
