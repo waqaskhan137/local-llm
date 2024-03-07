@@ -11,6 +11,27 @@ Make sure you have the following prerequisites installed on your machine:
 - Docker
 - Docker Compose
 
+### Project Structure
+
+```bash
+.
+├── CONTRIBUTING.md
+├── docker-compose-ollama-gpu.yaml
+├── docker-compose.yml
+├── Dockerfile
+├── LICENSE
+├── README.md
+├── requirements.txt
+└── src
+    ├── basic_chain.py
+    ├── main.py
+    ├── rag.py
+    ├── test.py
+    └── web
+        ├── index.html
+        └── local-rag-test.html
+```
+
 #### GPU Support (Optional)
 
 If you have a GPU and want to leverage its power within a Docker container, follow these steps to install the NVIDIA Container Toolkit:
