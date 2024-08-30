@@ -5,26 +5,26 @@ services:
   app:
     build: .
     ports:
-      - 8000:8000
-      - 5678:5678
+      - "8000:8000"  # Quoted for consistency
+      - "5678:5678"  # Quoted for consistency
     volumes:
-      - .:/code
+      - .:/code:ro  # Added ':ro' for read-only access, improving security
     command: uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
-    restart: always
+    restart: unless-stopped  # Changed from 'always' to 'unless-stopped' for better control
     depends_on:
       - ollama
       - ollama-webui
 
   ollama:
+    image: ollama/ollama:latest  # Moved image to the top for better readability
     volumes:
       - ./ollama/ollama:/root/.ollama
     container_name: ollama
     pull_policy: always
     tty: true
     restart: unless-stopped
-    image: ollama/ollama:latest
     ports:
-      - 11434:11434
+      - "11434:11434"  # Quoted for consistency
     deploy:
       resources:
         reservations:
@@ -41,9 +41,14 @@ services:
     depends_on:
       - ollama
     ports:
-      - 3000:8080
+      - "3000:8080"  # Quoted for consistency
     environment:
-      - '/ollama/api=http://ollama:11434/api'
+      - OLLAMA_API_BASE_URL=http://ollama:11434/api  # Changed to a more standard environment variable format
     extra_hosts:
       - host.docker.internal:host-gateway
     restart: unless-stopped
+
+# Added a network definition for explicit network configuration
+networks:
+  default:
+    name: ollama-network

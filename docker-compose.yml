@@ -2,33 +2,27 @@ services:
   app:
     build: .
     ports:
-      - 8000:8000
-      - 5678:5678
+      - "8000:8000"
+      - "5678:5678"
     volumes:
-      - .:/code
+      - .:/code:ro
     command: uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
-    restart: always
+    restart: unless-stopped
     depends_on:
       - ollama
-      - llama-webui
-    networks:
-      - ollama-docker
+      - ollama-webui
 
   ollama:
     image: ollama/ollama:latest
     ports:
-      - 11434:11434
+      - "11434:11434"
     volumes:
-      - .:/code
       - ./ollama/ollama:/root/.ollama
     container_name: ollama
     pull_policy: always
-    tty: true
-    restart: always
-    networks:
-      - ollama-docker
+    restart: unless-stopped
 
-  llama-webui:
+  ollama-webui:
     image: ghcr.io/ollama-webui/ollama-webui:main
     container_name: ollama-webui
     volumes:
@@ -36,16 +30,11 @@ services:
     depends_on:
       - ollama
     ports:
-      - 3000:8080
+      - "3000:8080"
     environment:
-      - '/ollama/api=http://ollama:11434/api'
-    extra_hosts:
-      - host.docker.internal:host-gateway
+      - OLLAMA_API_BASE_URL=http://ollama:11434/api
     restart: unless-stopped
-    networks:
-      - ollama-docker
 
 networks:
-  ollama-docker:
-    external: false
-  
+  default:
+    name: ollama-network
