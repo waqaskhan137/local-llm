@@ -1,4 +1,5 @@
-version: '3.8'
+# The version specification is optional in recent Docker Compose versions
+# Removing it allows for using the latest Compose file format
 
 services:
   app:
